@@ -287,6 +287,10 @@ namespace ohaGetTableFromPDF {
             
             private global::System.Data.DataColumn columnY;
             
+            private global::System.Data.DataColumn columnDescription;
+            
+            private global::System.Data.DataColumn columnType;
+            
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public ColumnsDataTable() {
@@ -348,6 +352,22 @@ namespace ohaGetTableFromPDF {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn DescriptionColumn {
+                get {
+                    return this.columnDescription;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn TypeColumn {
+                get {
+                    return this.columnType;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             [global::System.ComponentModel.Browsable(false)]
             public int Count {
                 get {
@@ -383,12 +403,14 @@ namespace ohaGetTableFromPDF {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
-            public ColumnsRow AddColumnsRow(decimal X, decimal Y) {
+            public ColumnsRow AddColumnsRow(decimal X, decimal Y, string Description, string Type) {
                 ColumnsRow rowColumnsRow = ((ColumnsRow)(this.NewRow()));
                 object[] columnValuesArray = new object[] {
                         null,
                         X,
-                        Y};
+                        Y,
+                        Description,
+                        Type};
                 rowColumnsRow.ItemArray = columnValuesArray;
                 this.Rows.Add(rowColumnsRow);
                 return rowColumnsRow;
@@ -414,6 +436,8 @@ namespace ohaGetTableFromPDF {
                 this.columnColumnNo = base.Columns["ColumnNo"];
                 this.columnX = base.Columns["X"];
                 this.columnY = base.Columns["Y"];
+                this.columnDescription = base.Columns["Description"];
+                this.columnType = base.Columns["Type"];
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -425,6 +449,10 @@ namespace ohaGetTableFromPDF {
                 base.Columns.Add(this.columnX);
                 this.columnY = new global::System.Data.DataColumn("Y", typeof(decimal), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnY);
+                this.columnDescription = new global::System.Data.DataColumn("Description", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnDescription);
+                this.columnType = new global::System.Data.DataColumn("Type", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnType);
                 this.columnColumnNo.AutoIncrement = true;
                 this.columnColumnNo.AutoIncrementSeed = 1;
                 this.columnColumnNo.AllowDBNull = false;
@@ -613,6 +641,38 @@ namespace ohaGetTableFromPDF {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string Description {
+                get {
+                    try {
+                        return ((string)(this[this.tableColumns.DescriptionColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("Der Wert für Spalte Description in Tabelle Columns ist DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableColumns.DescriptionColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string Type {
+                get {
+                    try {
+                        return ((string)(this[this.tableColumns.TypeColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("Der Wert für Spalte Type in Tabelle Columns ist DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableColumns.TypeColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public bool IsXNull() {
                 return this.IsNull(this.tableColumns.XColumn);
             }
@@ -633,6 +693,30 @@ namespace ohaGetTableFromPDF {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public void SetYNull() {
                 this[this.tableColumns.YColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsDescriptionNull() {
+                return this.IsNull(this.tableColumns.DescriptionColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetDescriptionNull() {
+                this[this.tableColumns.DescriptionColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsTypeNull() {
+                return this.IsNull(this.tableColumns.TypeColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetTypeNull() {
+                this[this.tableColumns.TypeColumn] = global::System.Convert.DBNull;
             }
         }
         

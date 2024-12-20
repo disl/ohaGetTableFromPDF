@@ -6,6 +6,7 @@ using Ghostscript.NET.Rasterizer;
 using Microsoft.Extensions.Logging;
 using ohaERP_EDI_Server.Invoices;
 using System.Data;
+using System.Globalization;
 using Tesseract;
 using TextOCR_PDF;
 
@@ -39,6 +40,8 @@ namespace ohaGetTableFromPDF
         //string m_file_for_email_template = "OCR_Model_file_for_email_%1.png";
         public enum enumLanguage { deu, ita, unknown };
         enumLanguage m_language_mode = enumLanguage.unknown;
+        CultureInfo m_culture_numeric = CultureInfo.CreateSpecificCulture("en-US");
+        CultureInfo m_culture_date = CultureInfo.CreateSpecificCulture("de-DE");
 
         // TEST ???
         private bool m_test_ok = false;
@@ -52,7 +55,7 @@ namespace ohaGetTableFromPDF
         private ILogger<Form1> m_logger;
         //private InvoiceDescriptor? m_invoiceDescriptor = null;
         private string m_error_message;
-        private bool m_adding_new;
+        private bool m_adding_new = true;
 
         public Form1()
         {
@@ -76,7 +79,24 @@ namespace ohaGetTableFromPDF
                     break;
             }
 
-            react_by_mouse_clickToolStripComboBox.Text = m_is_check_existing_invoices ? "Nein" : "Ja";
+            ohaBindingNavigator1.ShowMoveControls = false;
+            ohaBindingNavigator1.speichernToolStripButton.Visible = false;
+
+            FillTableForTest();
+
+            //react_by_mouse_clickToolStripComboBox.Text = m_is_check_existing_invoices ? "Nein" : "Ja";
+        }
+
+        private void FillTableForTest()
+        {
+            dataSet1.Columns.AddColumnsRow(272, 274, "85145548375", typeof(string).ToString());
+            dataSet1.Columns.AddColumnsRow(643, 276, "DNT-00257151,", typeof(string).ToString());
+            dataSet1.Columns.AddColumnsRow(1133, 274, "3.88", typeof(decimal).ToString());
+            dataSet1.Columns.AddColumnsRow(1405, 274, "31.10.24", typeof(DateTime).ToString());
+            dataSet1.Columns.AddColumnsRow(1679, 274, "04.11.24", typeof(DateTime).ToString());
+            dataSet1.Columns.AddColumnsRow(1926, 274, "09:06", typeof(TimeSpan).ToString());
+            dataSet1.Columns.AddColumnsRow(2179, 273, "CZ", typeof(string).ToString());
+            dataSet1.Columns.AddColumnsRow(2478, 274, "Kovar", typeof(string).ToString());
         }
 
         private void startToolStripMenuItem_Click(object sender, EventArgs e)
@@ -493,8 +513,8 @@ namespace ohaGetTableFromPDF
 
         private void imageBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            if (string.IsNullOrEmpty(react_by_mouse_clickToolStripComboBox.Text) || react_by_mouse_clickToolStripComboBox.Text != "Ja")
-                return;
+            //if (string.IsNullOrEmpty(react_by_mouse_clickToolStripComboBox.Text) || react_by_mouse_clickToolStripComboBox.Text != "Ja")
+            //    return;
 
             var ib = (ImageBox)sender;
             var x_offset = ib.HorizontalScrollBar.Value;
@@ -508,7 +528,7 @@ namespace ohaGetTableFromPDF
             Point point = new Point(pixelMousePosX, pixelMousePosY);
 
             var match_rect_tmp_obj = WordsArray.FirstOrDefault(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
-            var match_rect_tmp_obj_arr = WordsArray.Where(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
+            //var match_rect_tmp_obj_arr = WordsArray.Where(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
 
             if (match_rect_tmp_obj != null)
             {
@@ -519,31 +539,61 @@ namespace ohaGetTableFromPDF
                 var pts_X = match_rect.X + (match_rect.Width / 2);
                 var pts_Y = match_rect.Y + (match_rect.Height / 2);
 
-                if (m_adding_new)
-                {
+                var dgv_row = dataGridView1.CurrentRow;
+
+                //if (m_adding_new)
+                //{
                 //    var dgv_row = dataGridView1.CurrentRow;
                 //if (dgv_row == null)
                 //{
-                    bindingSource1.AddNew();
-                    var dgv_row = dataGridView1.CurrentRow;
-                    dgv_row.Cells[xColumn.Index].Value = pts_X;
-                    dgv_row.Cells[yColumn.Index].Value = pts_Y;
-                    //}
-                    //else
-                    //{
-                    //    if (dgv_row.Cells[xColumn.Index].Value == DBNull.Value)
-                    //    {
-
-                    //    }
-
-                    m_adding_new=false;
-                }
-                else
+                bool new_added = false;
+                if (dgv_row == null)
                 {
-                    var dgv_row = dataGridView1.CurrentRow;
-                    dgv_row.Cells[xColumn.Index].Value = pts_X;
-                    dgv_row.Cells[yColumn.Index].Value = pts_Y;
+                    new_added=true;
+                    bindingSource1.AddNew();
+                    //    //bindingSource1.MoveLast();
+                    dgv_row = dataGridView1.CurrentRow;
                 }
+
+                dgv_row.Cells[xColumn.Index].Value = pts_X;
+                dgv_row.Cells[yColumn.Index].Value = pts_Y;
+                dgv_row.Cells[Description.Index].Value = text;
+
+                int currentRowIndex = dataGridView1.CurrentRow.Index;
+
+                // Überprüfen, ob die aktuelle Zeile die letzte Zeile ist
+                if (currentRowIndex == dataGridView1.Rows.Count - 1)
+                {
+                    // Prüfen, ob es sich um die NewRow handelt
+                    if (dataGridView1.AllowUserToAddRows && dataGridView1.Rows[currentRowIndex].IsNewRow)
+                    {
+                        // Dies ist die neue Zeile.
+                        bindingSource1.AddNew();
+                    }
+                    else
+                    {
+                        // Dies ist die letzte Zeile mit Daten
+                        bindingSource1.AddNew();
+                    }
+                }
+
+                //if (new_added)
+                //    bindingSource1.AddNew();
+
+                //bindingSource1.MoveLast();
+                //bindingSource1.AddNew();
+
+                //     m_adding_new =false;
+                //}
+                //else
+                //{
+                //    //var dgv_row = dataGridView1.CurrentRow;
+                //    dgv_row.Cells[xColumn.Index].Value = pts_X;
+                //    dgv_row.Cells[yColumn.Index].Value = pts_Y;
+                //    dgv_row.Cells[Description.Index].Value = text;
+                //}
+
+
 
                 //if (dgv_row.Cells[TextColumn.Index].Value != null && !string.IsNullOrEmpty(dgv_row.Cells[TextColumn.Index].Value.ToString()))
                 //    dgv_row.Cells[TextColumn.Index].Value = text;  //+= "," + text;
@@ -569,6 +619,89 @@ namespace ohaGetTableFromPDF
         private void bindingSource1_AddingNew(object sender, System.ComponentModel.AddingNewEventArgs e)
         {
             m_adding_new=true;
+        }
+
+        private void getCsvToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<WordsArray> valideRowHeader_list = new List<WordsArray>();
+
+            try
+            {
+                foreach (var item in WordsArray)
+                {
+                    if (IsValideRowHeader(item))
+                    {
+                        valideRowHeader_list.Add(item);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageBox(enumShowMessageMode.Break, ex.Message);
+            }
+            // var all_rows_arr = WordsArray.Where(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
+        }
+
+        private bool IsValideRowHeader(WordsArray item)
+        {
+            for (int i = 0; i<dataSet1.Columns.Rows.Count-1; i++)
+            {
+                if (!HasANeighbourOnTheRight(i, item))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private bool HasANeighbourOnTheRight(int i, WordsArray item)
+        {
+            var previous_x = Convert.ToInt32(dataSet1.Columns.Rows[i]["X"].ToString());
+            var curr_x = Convert.ToInt32(dataSet1.Columns.Rows[i+1]["X"].ToString());
+            var diff_x = curr_x - previous_x;
+            Point centre_point = GetCentrePoint(item);
+            Point check_point = new Point(centre_point.X + diff_x, centre_point.Y);
+            var type_str = dataSet1.Columns.Rows[i+1]["Type"];
+            var obj = WordsArray.FirstOrDefault(a => a.Rectangle.Contains(check_point) && !string.IsNullOrWhiteSpace(a.Text));
+            if (obj == null)
+                return false;
+            var text = obj.Text;
+            var check_type = GetObjType(text);
+
+            return obj!= null;  //&& check_type==type_str;
+        }
+
+        private string GetObjType(string text)
+        {
+            try
+            {
+                var time = TimeSpan.Parse(text);
+                return typeof(TimeSpan).ToString();
+            }
+            catch
+            {
+
+                if (decimal.TryParse(text, m_culture_numeric, out var obj))
+                {
+                    return typeof(decimal).ToString();
+                }
+                else if (DateTime.TryParse(text, m_culture_date, out var obj_date))
+                {
+
+                    return typeof(DateTime).ToString();
+                }
+                else
+                {
+                    return typeof(string).ToString();
+                }
+            }
+        }
+
+        private Point GetCentrePoint(WordsArray item)
+        {
+            var pts_X = item.Rectangle.X + (item.Rectangle.Width / 2);
+            var pts_Y = item.Rectangle.Y + (item.Rectangle.Height / 2);
+            return new Point(pts_X, pts_Y);
         }
     }
 

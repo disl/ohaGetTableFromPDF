@@ -29,8 +29,20 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            splitContainer1 = new SplitContainer();
+            dataGridView1 = new DataGridView();
+            Column1 = new DataGridViewTextBoxColumn();
+            Description = new DataGridViewTextBoxColumn();
+            xColumn = new DataGridViewTextBoxColumn();
+            yColumn = new DataGridViewTextBoxColumn();
+            bindingSource1 = new BindingSource(components);
+            dataSet1 = new DataSet1();
+            ohaBindingNavigator1 = new ohaERP_Library.DataGridView.ohaBindingNavigator();
+            imageBox1 = new Emgu.CV.UI.ImageBox();
             menuStrip1 = new MenuStrip();
             startToolStripMenuItem = new ToolStripMenuItem();
+            getCsvToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem1 = new ToolStripMenuItem();
             tesseractPathToolStripMenuItem = new ToolStripMenuItem();
             tesseract_pathToolStripTextBox = new ToolStripTextBox();
@@ -38,18 +50,6 @@
             languageToolStripComboBox = new ToolStripComboBox();
             seiteToolStripMenuItem = new ToolStripMenuItem();
             siteToolStripComboBox = new ToolStripComboBox();
-            aufMausKlickReagierenToolStripMenuItem = new ToolStripMenuItem();
-            react_by_mouse_clickToolStripComboBox = new ToolStripComboBox();
-            imageBox1 = new Emgu.CV.UI.ImageBox();
-            splitContainer1 = new SplitContainer();
-            dataGridView1 = new DataGridView();
-            Column1 = new DataGridViewTextBoxColumn();
-            xColumn = new DataGridViewTextBoxColumn();
-            yColumn = new DataGridViewTextBoxColumn();
-            bindingSource1 = new BindingSource(components);
-            dataSet1 = new DataSet1();
-            menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)imageBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -57,133 +57,59 @@
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataSet1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)ohaBindingNavigator1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)imageBox1).BeginInit();
+            menuStrip1.SuspendLayout();
             SuspendLayout();
-            // 
-            // menuStrip1
-            // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { startToolStripMenuItem, toolStripMenuItem1, tesseractPathToolStripMenuItem, tesseract_pathToolStripTextBox, spracheToolStripMenuItem, languageToolStripComboBox, seiteToolStripMenuItem, siteToolStripComboBox, aufMausKlickReagierenToolStripMenuItem, react_by_mouse_clickToolStripComboBox });
-            menuStrip1.Location = new Point(0, 0);
-            menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1350, 27);
-            menuStrip1.TabIndex = 0;
-            menuStrip1.Text = "menuStrip1";
-            // 
-            // startToolStripMenuItem
-            // 
-            startToolStripMenuItem.Name = "startToolStripMenuItem";
-            startToolStripMenuItem.Size = new Size(43, 23);
-            startToolStripMenuItem.Text = "Start";
-            startToolStripMenuItem.Click += startToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem1
-            // 
-            toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(22, 23);
-            toolStripMenuItem1.Text = "|";
-            // 
-            // tesseractPathToolStripMenuItem
-            // 
-            tesseractPathToolStripMenuItem.Name = "tesseractPathToolStripMenuItem";
-            tesseractPathToolStripMenuItem.Size = new Size(98, 23);
-            tesseractPathToolStripMenuItem.Text = "Tesseract-Path:";
-            // 
-            // tesseract_pathToolStripTextBox
-            // 
-            tesseract_pathToolStripTextBox.Name = "tesseract_pathToolStripTextBox";
-            tesseract_pathToolStripTextBox.Size = new Size(100, 23);
-            tesseract_pathToolStripTextBox.Text = "C:\\Tesseract";
-            // 
-            // spracheToolStripMenuItem
-            // 
-            spracheToolStripMenuItem.Name = "spracheToolStripMenuItem";
-            spracheToolStripMenuItem.Size = new Size(64, 23);
-            spracheToolStripMenuItem.Text = "Sprache:";
-            // 
-            // languageToolStripComboBox
-            // 
-            languageToolStripComboBox.Name = "languageToolStripComboBox";
-            languageToolStripComboBox.Size = new Size(121, 23);
-            // 
-            // seiteToolStripMenuItem
-            // 
-            seiteToolStripMenuItem.Name = "seiteToolStripMenuItem";
-            seiteToolStripMenuItem.Size = new Size(47, 23);
-            seiteToolStripMenuItem.Text = "Seite:";
-            // 
-            // siteToolStripComboBox
-            // 
-            siteToolStripComboBox.Name = "siteToolStripComboBox";
-            siteToolStripComboBox.Size = new Size(121, 23);
-            siteToolStripComboBox.TextChanged += siteToolStripComboBox_TextChanged;
-            // 
-            // aufMausKlickReagierenToolStripMenuItem
-            // 
-            aufMausKlickReagierenToolStripMenuItem.Name = "aufMausKlickReagierenToolStripMenuItem";
-            aufMausKlickReagierenToolStripMenuItem.Size = new Size(148, 23);
-            aufMausKlickReagierenToolStripMenuItem.Text = "auf Maus Klick reagieren";
-            // 
-            // react_by_mouse_clickToolStripComboBox
-            // 
-            react_by_mouse_clickToolStripComboBox.Items.AddRange(new object[] { "Ja", "Nein" });
-            react_by_mouse_clickToolStripComboBox.Name = "react_by_mouse_clickToolStripComboBox";
-            react_by_mouse_clickToolStripComboBox.Size = new Size(121, 23);
-            // 
-            // imageBox1
-            // 
-            imageBox1.Dock = DockStyle.Fill;
-            imageBox1.Location = new Point(0, 0);
-            imageBox1.Name = "imageBox1";
-            imageBox1.Size = new Size(1001, 695);
-            imageBox1.TabIndex = 2;
-            imageBox1.TabStop = false;
-            imageBox1.MouseClick += imageBox1_MouseClick;
             // 
             // splitContainer1
             // 
-            splitContainer1.Dock = DockStyle.Fill;
-            splitContainer1.Location = new Point(0, 27);
+            resources.ApplyResources(splitContainer1, "splitContainer1");
+            splitContainer1.FixedPanel = FixedPanel.Panel1;
             splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
             // 
             splitContainer1.Panel1.Controls.Add(dataGridView1);
+            splitContainer1.Panel1.Controls.Add(ohaBindingNavigator1);
             // 
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(imageBox1);
-            splitContainer1.Size = new Size(1350, 695);
-            splitContainer1.SplitterDistance = 345;
-            splitContainer1.TabIndex = 3;
             // 
             // dataGridView1
             // 
+            dataGridView1.AllowUserToAddRows = false;
             dataGridView1.AutoGenerateColumns = false;
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1, xColumn, yColumn });
+            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Column1, Description, xColumn, yColumn });
             dataGridView1.DataSource = bindingSource1;
-            dataGridView1.Dock = DockStyle.Fill;
-            dataGridView1.Location = new Point(0, 0);
+            resources.ApplyResources(dataGridView1, "dataGridView1");
             dataGridView1.Name = "dataGridView1";
-            dataGridView1.Size = new Size(345, 695);
-            dataGridView1.TabIndex = 0;
             // 
             // Column1
             // 
             Column1.DataPropertyName = "ColumnNo";
-            Column1.HeaderText = "ColumnNo";
+            resources.ApplyResources(Column1, "Column1");
             Column1.Name = "Column1";
+            // 
+            // Description
+            // 
+            Description.DataPropertyName = "Description";
+            resources.ApplyResources(Description, "Description");
+            Description.Name = "Description";
             // 
             // xColumn
             // 
             xColumn.DataPropertyName = "X";
-            xColumn.HeaderText = "X";
+            resources.ApplyResources(xColumn, "xColumn");
             xColumn.Name = "xColumn";
             // 
             // yColumn
             // 
             yColumn.DataPropertyName = "Y";
-            yColumn.HeaderText = "Y";
+            resources.ApplyResources(yColumn, "yColumn");
             yColumn.Name = "yColumn";
             // 
             // bindingSource1
@@ -198,27 +124,97 @@
             dataSet1.Namespace = "http://tempuri.org/DataSet1.xsd";
             dataSet1.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
             // 
+            // ohaBindingNavigator1
+            // 
+            ohaBindingNavigator1.BindingSource = bindingSource1;
+            resources.ApplyResources(ohaBindingNavigator1, "ohaBindingNavigator1");
+            ohaBindingNavigator1.Name = "ohaBindingNavigator1";
+            ohaBindingNavigator1.ShowMoveControls = true;
+            ohaBindingNavigator1.ShowOnlyMoveControls = false;
+            // 
+            // imageBox1
+            // 
+            resources.ApplyResources(imageBox1, "imageBox1");
+            imageBox1.Name = "imageBox1";
+            imageBox1.TabStop = false;
+            imageBox1.MouseClick += imageBox1_MouseClick;
+            // 
+            // menuStrip1
+            // 
+            menuStrip1.Items.AddRange(new ToolStripItem[] { startToolStripMenuItem, getCsvToolStripMenuItem, toolStripMenuItem1, tesseractPathToolStripMenuItem, tesseract_pathToolStripTextBox, spracheToolStripMenuItem, languageToolStripComboBox, seiteToolStripMenuItem, siteToolStripComboBox });
+            resources.ApplyResources(menuStrip1, "menuStrip1");
+            menuStrip1.Name = "menuStrip1";
+            // 
+            // startToolStripMenuItem
+            // 
+            startToolStripMenuItem.Name = "startToolStripMenuItem";
+            resources.ApplyResources(startToolStripMenuItem, "startToolStripMenuItem");
+            startToolStripMenuItem.Click += startToolStripMenuItem_Click;
+            // 
+            // getCsvToolStripMenuItem
+            // 
+            getCsvToolStripMenuItem.Name = "getCsvToolStripMenuItem";
+            resources.ApplyResources(getCsvToolStripMenuItem, "getCsvToolStripMenuItem");
+            getCsvToolStripMenuItem.Click += getCsvToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem1
+            // 
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            resources.ApplyResources(toolStripMenuItem1, "toolStripMenuItem1");
+            // 
+            // tesseractPathToolStripMenuItem
+            // 
+            tesseractPathToolStripMenuItem.Name = "tesseractPathToolStripMenuItem";
+            resources.ApplyResources(tesseractPathToolStripMenuItem, "tesseractPathToolStripMenuItem");
+            // 
+            // tesseract_pathToolStripTextBox
+            // 
+            tesseract_pathToolStripTextBox.Name = "tesseract_pathToolStripTextBox";
+            resources.ApplyResources(tesseract_pathToolStripTextBox, "tesseract_pathToolStripTextBox");
+            // 
+            // spracheToolStripMenuItem
+            // 
+            spracheToolStripMenuItem.Name = "spracheToolStripMenuItem";
+            resources.ApplyResources(spracheToolStripMenuItem, "spracheToolStripMenuItem");
+            // 
+            // languageToolStripComboBox
+            // 
+            languageToolStripComboBox.Name = "languageToolStripComboBox";
+            resources.ApplyResources(languageToolStripComboBox, "languageToolStripComboBox");
+            // 
+            // seiteToolStripMenuItem
+            // 
+            seiteToolStripMenuItem.Name = "seiteToolStripMenuItem";
+            resources.ApplyResources(seiteToolStripMenuItem, "seiteToolStripMenuItem");
+            // 
+            // siteToolStripComboBox
+            // 
+            siteToolStripComboBox.Name = "siteToolStripComboBox";
+            resources.ApplyResources(siteToolStripComboBox, "siteToolStripComboBox");
+            siteToolStripComboBox.TextChanged += siteToolStripComboBox_TextChanged;
+            // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            resources.ApplyResources(this, "$this");
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1350, 722);
             Controls.Add(splitContainer1);
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
             Name = "Form1";
-            Text = "Form1";
+            WindowState = FormWindowState.Maximized;
             Load += Form1_Load;
-            menuStrip1.ResumeLayout(false);
-            menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)imageBox1).EndInit();
             splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel1.PerformLayout();
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ((System.ComponentModel.ISupportInitialize)bindingSource1).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataSet1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ohaBindingNavigator1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)imageBox1).EndInit();
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -235,14 +231,15 @@
         private ToolStripComboBox languageToolStripComboBox;
         private ToolStripMenuItem seiteToolStripMenuItem;
         private ToolStripComboBox siteToolStripComboBox;
-        private ToolStripMenuItem aufMausKlickReagierenToolStripMenuItem;
-        private ToolStripComboBox react_by_mouse_clickToolStripComboBox;
         private SplitContainer splitContainer1;
         private DataGridView dataGridView1;
         private DataSet1 dataSet1;
         private DataGridViewTextBoxColumn descriptionDataGridViewTextBoxColumn;
         private BindingSource bindingSource1;
+        private ohaERP_Library.DataGridView.ohaBindingNavigator ohaBindingNavigator1;
+        private ToolStripMenuItem getCsvToolStripMenuItem;
         private DataGridViewTextBoxColumn Column1;
+        private DataGridViewTextBoxColumn Description;
         private DataGridViewTextBoxColumn xColumn;
         private DataGridViewTextBoxColumn yColumn;
     }
