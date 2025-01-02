@@ -666,7 +666,7 @@ namespace ohaGetTableFromPDF
                     }
                     
                 }
-                var file_name = Path.Combine(Path.GetTempPath(), "table_output.csv");
+                var file_name = Path.Combine(Path.GetTempPath(), "pdf_to_table_output.csv");
                 if (File.Exists(file_name))
                     File.Delete(file_name);
                 System.Text.Encoding encoding = Encoding.UTF8;
