@@ -6,7 +6,9 @@ using Ghostscript.NET.Rasterizer;
 using Microsoft.Extensions.Logging;
 using ohaERP_EDI_Server.Invoices;
 using System.Data;
+using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 using Tesseract;
 using TextOCR_PDF;
 
@@ -20,6 +22,7 @@ namespace ohaGetTableFromPDF
         WordsArray? m_match_rect_SumLabel_obj = null;
         private const Tesseract.PageIteratorLevel pageIteratorLevel = Tesseract.PageIteratorLevel.Word;
         private const string m_c_output_png_file = "output_png.png";
+        private const double m_c_tolerance = 0.1;
         string m_tessdata_dir;
         List<WordsArray> WordsArray = new List<WordsArray>();
         List<System.Drawing.Image> ImageArray = new();
@@ -215,6 +218,7 @@ namespace ohaGetTableFromPDF
                 else
                 {
                     OpenFileDialog openFileDialog = new OpenFileDialog();
+                    openFileDialog.Filter = "PDF-files (*.pdf)|*.pdf|All files (*.*)|*.*";
                     if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
                         return ForOpenPDFAndCreateRectangles(openFileDialog.FileName);
@@ -272,12 +276,6 @@ namespace ohaGetTableFromPDF
                 var train_data_deu = tesseract_pathToolStripTextBox.Text; //System.IO.Path.Combine(GetTmpPath(), "tessdata");
 
                 var engine_mode = EngineMode.Default;
-                if (m_supplier_setupsysid == 58      // Emil Stahl
-                    || m_supplier_setupsysid == 16   // Otto Roth
-                    )
-                {
-                    engine_mode = EngineMode.TesseractOnly;
-                }
 
                 using (var engine = new TesseractEngine(train_data_deu, languageToolStripComboBox.Text, engine_mode))
                 {
@@ -287,6 +285,7 @@ namespace ohaGetTableFromPDF
                     {
                         using (Mat image_cv = new Mat(image_path))
                         {
+                            WordsArray = new List<WordsArray>();
                             DrawRects(image_pix, page, image_cv);
                         }
                     }
@@ -314,7 +313,7 @@ namespace ohaGetTableFromPDF
             {
                 iter.Begin();
                 Rect symbolBounds;
-                WordsArray = new List<WordsArray>();
+                //WordsArray = new List<WordsArray>();
 
                 do
                 {
@@ -332,6 +331,7 @@ namespace ohaGetTableFromPDF
 
                 imageBox1.Image = image_cv;
             }
+
         }
 
         private string PDFToPNG(string inputFile)
@@ -503,12 +503,16 @@ namespace ohaGetTableFromPDF
 
         private void siteToolStripComboBox_TextChanged(object sender, EventArgs e)
         {
+            ForSiteToolStripComboBox_TextChanged(Convert.ToInt32(siteToolStripComboBox.Text) - 1);
+        }
+
+        private void ForSiteToolStripComboBox_TextChanged(int ImageArray_Ind)
+        {
             if (ImageArray == null || ImageArray.Count == 0) return;
 
             var outputPNGPath = System.IO.Path.Combine(GetTmpPath(), m_c_output_png_file);
-            ImageArray[Convert.ToInt32(siteToolStripComboBox.Text) - 1].Save(outputPNGPath);
+            ImageArray[ImageArray_Ind].Save(outputPNGPath);
             DrawRectangles(outputPNGPath);
-
         }
 
         private void imageBox1_MouseClick(object sender, MouseEventArgs e)
@@ -624,77 +628,109 @@ namespace ohaGetTableFromPDF
         private void getCsvToolStripMenuItem_Click(object sender, EventArgs e)
         {
             List<WordsArray> valideRowHeader_list = new List<WordsArray>();
+            List<WordsArray> valideRowHeader_list_filter = new List<WordsArray>();
+            List<int> item_areas_list = new List<int>();
+            List<string> output_list = new List<string>();
+
+            Cursor = Cursors.WaitCursor;
 
             try
             {
-                foreach (var item in WordsArray)
+                for (int i = 1; i<=siteToolStripComboBox.Items.Count; i++)
                 {
-                    if (IsValideRowHeader(item))
+                    ForSiteToolStripComboBox_TextChanged(i - 1);
+
+                    foreach (var item in WordsArray)
                     {
-                        valideRowHeader_list.Add(item);
+                        if (IsValideRowHeader(item))
+                        {
+                            item.Cells_content_list.Insert(0, item.Text);
+                            var item_area = item.Rectangle.Width * item.Rectangle.Height;
+                            item_areas_list.Add(item_area);
+                            valideRowHeader_list.Add(item);
+
+                        }
                     }
+                    var meistErscheinendeZahl = item_areas_list
+                        .GroupBy(z => z)                  // Gruppieren nach Zahlen
+                        .OrderByDescending(g => g.Count()) // Sortieren nach Häufigkeit (absteigend)
+                        .First()                          // Erste Gruppe (höchste Häufigkeit)
+                        .Key;
+
+                    valideRowHeader_list_filter = valideRowHeader_list.Where(x => CheckArea(x, meistErscheinendeZahl)).ToList();
+                    
+                    foreach(var item in valideRowHeader_list_filter)
+                    {
+                        var output_str = string.Join(";", item.Cells_content_list);
+                        output_list.Add($"{output_str}");   
+                    }
+                    
                 }
+                var file_name = Path.Combine(Path.GetTempPath(), "table_output.csv");
+                if (File.Exists(file_name))
+                    File.Delete(file_name);
+                System.Text.Encoding encoding = Encoding.UTF8;
+                File.WriteAllLines(file_name, output_list, encoding);
+                Process.Start(new ProcessStartInfo
+                {
+                    Arguments=file_name,
+                    FileName = "notepad.exe",
+                    UseShellExecute = true
+                });
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName=Path.GetDirectoryName(file_name),                    
+                    UseShellExecute = true
+                });
+
+
             }
             catch (Exception ex)
             {
                 ShowMessageBox(enumShowMessageMode.Break, ex.Message);
             }
-            // var all_rows_arr = WordsArray.Where(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
+            finally { Cursor = Cursors.WaitCursor; }
+        }
+
+        private bool CheckArea(WordsArray item, int meistErscheinendeZahl)
+        {
+            bool ret_val = false;
+            var item_area = item.Rectangle.Width * item.Rectangle.Height;
+            ret_val=
+                item_area >= meistErscheinendeZahl - meistErscheinendeZahl * m_c_tolerance &&
+                item_area <= meistErscheinendeZahl + meistErscheinendeZahl * m_c_tolerance;
+            return ret_val;
         }
 
         private bool IsValideRowHeader(WordsArray item)
         {
+            string? cell_content = null;
+            item.Cells_content_list.Clear();
             for (int i = 0; i<dataSet1.Columns.Rows.Count-1; i++)
             {
-                if (!HasANeighbourOnTheRight(i, item))
+                cell_content=null;               
+                if (!HasANeighbourOnTheRight(i, item, ref cell_content))
                 {
                     return false;
                 }
+                item.Cells_content_list.Add(cell_content);
             }
             return true;
         }
 
-        private bool HasANeighbourOnTheRight(int i, WordsArray item)
+        private bool HasANeighbourOnTheRight(int i, WordsArray item, ref string? cell_content)
         {
-            var previous_x = Convert.ToInt32(dataSet1.Columns.Rows[i]["X"].ToString());
-            var curr_x = Convert.ToInt32(dataSet1.Columns.Rows[i+1]["X"].ToString());
-            var diff_x = curr_x - previous_x;
+            cell_content=null;
+            var curr_x = Convert.ToInt32(dataSet1.Columns.Rows[0]["X"].ToString());
+            var right_neighbour_x = Convert.ToInt32(dataSet1.Columns.Rows[i+1]["X"].ToString());
+            var diff_x = right_neighbour_x - curr_x;
             Point centre_point = GetCentrePoint(item);
             Point check_point = new Point(centre_point.X + diff_x, centre_point.Y);
-            var type_str = dataSet1.Columns.Rows[i+1]["Type"];
             var obj = WordsArray.FirstOrDefault(a => a.Rectangle.Contains(check_point) && !string.IsNullOrWhiteSpace(a.Text));
             if (obj == null)
                 return false;
-            var text = obj.Text;
-            var check_type = GetObjType(text);
-
-            return obj!= null;  //&& check_type==type_str;
-        }
-
-        private string GetObjType(string text)
-        {
-            try
-            {
-                var time = TimeSpan.Parse(text);
-                return typeof(TimeSpan).ToString();
-            }
-            catch
-            {
-
-                if (decimal.TryParse(text, m_culture_numeric, out var obj))
-                {
-                    return typeof(decimal).ToString();
-                }
-                else if (DateTime.TryParse(text, m_culture_date, out var obj_date))
-                {
-
-                    return typeof(DateTime).ToString();
-                }
-                else
-                {
-                    return typeof(string).ToString();
-                }
-            }
+            cell_content = obj.Text;
+            return obj!= null;
         }
 
         private Point GetCentrePoint(WordsArray item)
@@ -770,6 +806,7 @@ namespace ohaGetTableFromPDF
 
     public class WordsArray
     {
+        public List<string> Cells_content_list = new List<string>();
         public Rectangle Rectangle;
         public string Text;
 
