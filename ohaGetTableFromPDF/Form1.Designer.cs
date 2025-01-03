@@ -50,6 +50,7 @@
             languageToolStripComboBox = new ToolStripComboBox();
             seiteToolStripMenuItem = new ToolStripMenuItem();
             siteToolStripComboBox = new ToolStripComboBox();
+            tabulaToolStripMenuItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -141,7 +142,7 @@
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { startToolStripMenuItem, getCsvToolStripMenuItem, toolStripMenuItem1, tesseractPathToolStripMenuItem, tesseract_pathToolStripTextBox, spracheToolStripMenuItem, languageToolStripComboBox, seiteToolStripMenuItem, siteToolStripComboBox });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { startToolStripMenuItem, getCsvToolStripMenuItem, toolStripMenuItem1, tesseractPathToolStripMenuItem, tesseract_pathToolStripTextBox, spracheToolStripMenuItem, languageToolStripComboBox, seiteToolStripMenuItem, siteToolStripComboBox, tabulaToolStripMenuItem });
             resources.ApplyResources(menuStrip1, "menuStrip1");
             menuStrip1.Name = "menuStrip1";
             // 
@@ -193,6 +194,12 @@
             resources.ApplyResources(siteToolStripComboBox, "siteToolStripComboBox");
             siteToolStripComboBox.TextChanged += siteToolStripComboBox_TextChanged;
             // 
+            // tabulaToolStripMenuItem
+            // 
+            tabulaToolStripMenuItem.Name = "tabulaToolStripMenuItem";
+            resources.ApplyResources(tabulaToolStripMenuItem, "tabulaToolStripMenuItem");
+            tabulaToolStripMenuItem.Click += tabulaToolStripMenuItem_Click;
+            // 
             // Form1
             // 
             resources.ApplyResources(this, "$this");
@@ -242,5 +249,6 @@
         private DataGridViewTextBoxColumn Description;
         private DataGridViewTextBoxColumn xColumn;
         private DataGridViewTextBoxColumn yColumn;
+        private ToolStripMenuItem tabulaToolStripMenuItem;
     }
 }

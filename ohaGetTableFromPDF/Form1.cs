@@ -9,8 +9,12 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Tabula;
+using Tabula.Detectors;
+using Tabula.Extractors;
 using Tesseract;
 using TextOCR_PDF;
+using UglyToad.PdfPig;
 
 namespace ohaGetTableFromPDF
 {
@@ -21,10 +25,11 @@ namespace ohaGetTableFromPDF
         WordsArray? m_match_rect_NumberLabel_obj = null;
         WordsArray? m_match_rect_SumLabel_obj = null;
         private const Tesseract.PageIteratorLevel pageIteratorLevel = Tesseract.PageIteratorLevel.Word;
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
         private const string m_c_output_png_file = "output_png.png";
         private const double m_c_tolerance = 0.1;
         string m_tessdata_dir;
-        List<WordsArray> WordsArray = new List<WordsArray>();
+        List<WordsArray> m_WordsArray = new List<WordsArray>();
         List<System.Drawing.Image> ImageArray = new();
         private int m_page_count;
         private int m_supplier_setupsysid;
@@ -83,23 +88,57 @@ namespace ohaGetTableFromPDF
             }
 
             ohaBindingNavigator1.ShowMoveControls = false;
-            ohaBindingNavigator1.speichernToolStripButton.Visible = false;
+            ohaBindingNavigator1.speichernToolStripButton.Visible = true;
+            ohaBindingNavigator1.speichernToolStripButton.Click +=SpeichernToolStripButton_Click;
+            ohaBindingNavigator1.speichernToolStripButton.ToolTipText="Save XML-Data";
+            var open_xmlToolStripButton = new ToolStripButton();
+            open_xmlToolStripButton.Image = ohaGetTableFromPDF.Properties.Resources.open_file_IconGroup.ToBitmap();
+            open_xmlToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            open_xmlToolStripButton.Name = "speichernToolStripButton";
+            open_xmlToolStripButton.Size = new Size(35, 35);
+            open_xmlToolStripButton.AutoSize = false;
+            open_xmlToolStripButton.Click +=loadXMLDataToolStripMenuItem_Click;
+            open_xmlToolStripButton.ToolTipText="Load XML-Data";
+            ohaBindingNavigator1.Items.Add(open_xmlToolStripButton);
 
             FillTableForTest();
 
             //react_by_mouse_clickToolStripComboBox.Text = m_is_check_existing_invoices ? "Nein" : "Ja";
         }
 
+        private void SpeichernToolStripButton_Click(object? sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+            saveFileDialog1.Filter = "XML-files (*.xml)|*.xml";
+            saveFileDialog1.RestoreDirectory = true;
+
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                dataSet1.Columns.WriteXml(saveFileDialog1.FileName);
+            }
+        }
+
+        private void loadXMLDataToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog open_file = new OpenFileDialog();
+            open_file.Filter = "XML-files (*.xml)|*.xml";
+            if (open_file.ShowDialog() == DialogResult.OK)
+            {
+                dataSet1.Columns.Clear();
+                dataSet1.Columns.ReadXml(open_file.FileName);
+            }
+        }
+
         private void FillTableForTest()
         {
-            dataSet1.Columns.AddColumnsRow(272, 274, "85145548375", typeof(string).ToString());
-            dataSet1.Columns.AddColumnsRow(643, 276, "DNT-00257151,", typeof(string).ToString());
-            dataSet1.Columns.AddColumnsRow(1133, 274, "3.88", typeof(decimal).ToString());
-            dataSet1.Columns.AddColumnsRow(1405, 274, "31.10.24", typeof(DateTime).ToString());
-            dataSet1.Columns.AddColumnsRow(1679, 274, "04.11.24", typeof(DateTime).ToString());
-            dataSet1.Columns.AddColumnsRow(1926, 274, "09:06", typeof(TimeSpan).ToString());
-            dataSet1.Columns.AddColumnsRow(2179, 273, "CZ", typeof(string).ToString());
-            dataSet1.Columns.AddColumnsRow(2478, 274, "Kovar", typeof(string).ToString());
+            //dataSet1.Columns.AddColumnsRow(272, 274, "85145548375", typeof(string).ToString());
+            //dataSet1.Columns.AddColumnsRow(643, 276, "DNT-00257151,", typeof(string).ToString());
+            //dataSet1.Columns.AddColumnsRow(1133, 274, "3.88", typeof(decimal).ToString());
+            //dataSet1.Columns.AddColumnsRow(1405, 274, "31.10.24", typeof(DateTime).ToString());
+            //dataSet1.Columns.AddColumnsRow(1679, 274, "04.11.24", typeof(DateTime).ToString());
+            //dataSet1.Columns.AddColumnsRow(1926, 274, "09:06", typeof(TimeSpan).ToString());
+            //dataSet1.Columns.AddColumnsRow(2179, 273, "CZ", typeof(string).ToString());
+            //dataSet1.Columns.AddColumnsRow(2478, 274, "Kovar", typeof(string).ToString());
         }
 
         private void startToolStripMenuItem_Click(object sender, EventArgs e)
@@ -285,7 +324,7 @@ namespace ohaGetTableFromPDF
                     {
                         using (Mat image_cv = new Mat(image_path))
                         {
-                            WordsArray = new List<WordsArray>();
+                            m_WordsArray = new List<WordsArray>();
                             DrawRects(image_pix, page, image_cv);
                         }
                     }
@@ -325,7 +364,7 @@ namespace ohaGetTableFromPDF
                         // Rectangles text
                         var iter_text = iter.GetText(pageIteratorLevel);
                         // Fill bounds-text-array
-                        WordsArray.Add(new WordsArray(bounds, iter_text));
+                        m_WordsArray.Add(new WordsArray(bounds, iter_text));
                     }
                 } while (iter.Next(pageIteratorLevel));
 
@@ -531,13 +570,13 @@ namespace ohaGetTableFromPDF
 
             Point point = new Point(pixelMousePosX, pixelMousePosY);
 
-            var match_rect_tmp_obj = WordsArray.FirstOrDefault(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
-            //var match_rect_tmp_obj_arr = WordsArray.Where(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
+            var match_rect_tmp_obj = m_WordsArray.FirstOrDefault(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
+            //var match_rect_tmp_obj_arr = m_WordsArray.Where(a => a.Rectangle.Contains(point) && !string.IsNullOrWhiteSpace(a.Text));
 
             if (match_rect_tmp_obj != null)
             {
                 Rectangle match_rect = match_rect_tmp_obj.Rectangle;
-                var text_tmp = WordsArray.FirstOrDefault(a => a.Rectangle == match_rect);
+                var text_tmp = m_WordsArray.FirstOrDefault(a => a.Rectangle == match_rect);
                 var text = text_tmp == null ? "" : text_tmp.Text;
 
                 var pts_X = match_rect.X + (match_rect.Width / 2);
@@ -632,15 +671,23 @@ namespace ohaGetTableFromPDF
             List<int> item_areas_list = new List<int>();
             List<string> output_list = new List<string>();
 
-            Cursor = Cursors.WaitCursor;
-
             try
             {
+                if (dataSet1.Columns.Rows.Count == 0)
+                {
+                    throw new Exception("Kein Suchmuster vorhanden. Er muss neu erstellt oder eingelesen sein.");
+                }
+                if (siteToolStripComboBox.Items.Count == 0)
+                {
+                    throw new Exception("Kein PDF-Datei wurde eingelsen.");
+                }
+
+                Cursor = Cursors.WaitCursor;
                 for (int i = 1; i<=siteToolStripComboBox.Items.Count; i++)
                 {
                     ForSiteToolStripComboBox_TextChanged(i - 1);
 
-                    foreach (var item in WordsArray)
+                    foreach (var item in m_WordsArray)
                     {
                         if (IsValideRowHeader(item))
                         {
@@ -658,13 +705,13 @@ namespace ohaGetTableFromPDF
                         .Key;
 
                     valideRowHeader_list_filter = valideRowHeader_list.Where(x => CheckArea(x, meistErscheinendeZahl)).ToList();
-                    
-                    foreach(var item in valideRowHeader_list_filter)
+
+                    foreach (var item in valideRowHeader_list_filter)
                     {
                         var output_str = string.Join(";", item.Cells_content_list);
-                        output_list.Add($"{output_str}");   
+                        output_list.Add($"{output_str}");
                     }
-                    
+
                 }
                 var file_name = Path.Combine(Path.GetTempPath(), "pdf_to_table_output.csv");
                 if (File.Exists(file_name))
@@ -679,7 +726,7 @@ namespace ohaGetTableFromPDF
                 });
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName=Path.GetDirectoryName(file_name),                    
+                    FileName=Path.GetDirectoryName(file_name),
                     UseShellExecute = true
                 });
 
@@ -689,7 +736,7 @@ namespace ohaGetTableFromPDF
             {
                 ShowMessageBox(enumShowMessageMode.Break, ex.Message);
             }
-            finally { Cursor = Cursors.WaitCursor; }
+            finally { Cursor = Cursors.Default; }
         }
 
         private bool CheckArea(WordsArray item, int meistErscheinendeZahl)
@@ -708,7 +755,7 @@ namespace ohaGetTableFromPDF
             item.Cells_content_list.Clear();
             for (int i = 0; i<dataSet1.Columns.Rows.Count-1; i++)
             {
-                cell_content=null;               
+                cell_content=null;
                 if (!HasANeighbourOnTheRight(i, item, ref cell_content))
                 {
                     return false;
@@ -726,7 +773,7 @@ namespace ohaGetTableFromPDF
             var diff_x = right_neighbour_x - curr_x;
             Point centre_point = GetCentrePoint(item);
             Point check_point = new Point(centre_point.X + diff_x, centre_point.Y);
-            var obj = WordsArray.FirstOrDefault(a => a.Rectangle.Contains(check_point) && !string.IsNullOrWhiteSpace(a.Text));
+            var obj = m_WordsArray.FirstOrDefault(a => a.Rectangle.Contains(check_point) && !string.IsNullOrWhiteSpace(a.Text));
             if (obj == null)
                 return false;
             cell_content = obj.Text;
@@ -739,83 +786,146 @@ namespace ohaGetTableFromPDF
             var pts_Y = item.Rectangle.Y + (item.Rectangle.Height / 2);
             return new Point(pts_X, pts_Y);
         }
-    }
 
-
-
-    public class ZUGFeRD_InfoType
-    {
-        int? Docu_archive_invoicesysid;
-        List<ZUGFeRD_invoice_details_TypeTable>? ZUGFeRD_invoice_details_TypeTable;      // Positionen
-        public string? InvoiceNo;                                                        // Rechungsnummer
-        public DateTime? InvoiceDate;                                                    // Rechnungsdatum
-        public decimal? TaxBasisAmount;                                                  // Netto Rechnungsbetrag
-        decimal? TaxPercent;                                                             // MWST Prozentsatz
-        public decimal? TaxTotalAmount;                                                  // MWST Betrag
-        public decimal? GrandTotalAmount;                                                // Gesamtbetrag
-        public string? Currency;                                                         // Währung
-
-        public ZUGFeRD_InfoType(
-            int? docu_archive_invoicesysid,
-            List<ZUGFeRD_invoice_details_TypeTable>? zUGFeRD_invoice_details_TypeTable,
-            string? invoiceNo,
-            DateTime? invoiceDate,
-            decimal? taxBasisAmount,
-            decimal? taxPercent,
-            decimal? taxTotalAmount,
-            decimal? grandTotalAmount,
-            string? currency)
+        private void tabulaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Docu_archive_invoicesysid = docu_archive_invoicesysid;
-            ZUGFeRD_invoice_details_TypeTable = zUGFeRD_invoice_details_TypeTable;
-            InvoiceNo = invoiceNo;
-            InvoiceDate = invoiceDate;
-            TaxBasisAmount = taxBasisAmount;
-            TaxPercent = taxPercent;
-            TaxTotalAmount = taxTotalAmount;
-            GrandTotalAmount = grandTotalAmount;
-            Currency = currency;
+            StringBuilder sb = new StringBuilder();
+
+            OpenFileDialog open_file = new OpenFileDialog();
+            open_file.Filter = "PDF-files (*.pdf)|*.pdf";
+            if (open_file.ShowDialog() == DialogResult.OK)
+            {
+                using (PdfDocument _document = PdfDocument.Open(open_file.FileName, new ParsingOptions() { ClipPaths = true }))
+                {
+                    var _pages = _document.GetPages().ToList();
+                    for (int i = 1; i <= _pages.Count; i++)
+                    {
+                        var page = ObjectExtractor.Extract(_document, i);
+                        // detect canditate table zones
+                        SimpleNurminenDetectionAlgorithm detector = new SimpleNurminenDetectionAlgorithm();
+                        var regions = detector.Detect(page);
+                        for (int r = 0; r<regions.Count; r++)
+                        {
+                            IExtractionAlgorithm ea = new BasicExtractionAlgorithm(); //SpreadsheetExtractionAlgorithm(); //BasicExtractionAlgorithm();
+                            var tables = ea.Extract(page.GetArea(regions[r].BoundingBox)); // take first candidate area
+                            for (int t = 0; t<tables.Count; t++)
+                            {
+                                var table = tables[t];
+                                var rows = table.Rows;
+
+                                var csv_writer = new Tabula.Writers.CSVWriter(";");
+
+                                using (var stream = new MemoryStream())
+                                using (var sw = new StreamWriter(stream) { AutoFlush = true })
+                                {
+                                    csv_writer.Write(sb, table);
+                                }
+                            }
+                        }
+                    }
+                }
+                var output_str = sb.ToString();
+
+                var file_name = Path.Combine(Path.GetTempPath(), "pdf_to_table_output.csv");
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter(file_name))
+                {
+                    file.WriteLine(sb.ToString()); 
+                }
+               
+                if (File.Exists(file_name))
+                    File.Delete(file_name);
+                System.Text.Encoding encoding = Encoding.UTF8;
+                File.WriteAllText(file_name, output_str, encoding);
+                Process.Start(new ProcessStartInfo
+                {
+                    Arguments=file_name,
+                    FileName = "notepad.exe",
+                    UseShellExecute = true
+                });
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName=Path.GetDirectoryName(file_name),
+                    UseShellExecute = true
+                });
+            }
         }
-    }
 
-    public class ZUGFeRD_invoice_details_TypeTable
-    {
-        public decimal? BilledQuantity;
-        public string? SellerAssignedID;
-        public decimal? GrossUnitPrice;
-        public decimal? LineTotalAmount;
 
-        public ZUGFeRD_invoice_details_TypeTable(
-            decimal billedQuantity,
-            string sellerAssignedID,
-            decimal grossUnitPrice,
-            decimal lineTotalAmount)
+
+        public class ZUGFeRD_InfoType
         {
-            BilledQuantity = billedQuantity;
-            SellerAssignedID = sellerAssignedID;
-            GrossUnitPrice = grossUnitPrice;
-            LineTotalAmount = lineTotalAmount;
+            int? Docu_archive_invoicesysid;
+            List<ZUGFeRD_invoice_details_TypeTable>? ZUGFeRD_invoice_details_TypeTable;      // Positionen
+            public string? InvoiceNo;                                                        // Rechungsnummer
+            public DateTime? InvoiceDate;                                                    // Rechnungsdatum
+            public decimal? TaxBasisAmount;                                                  // Netto Rechnungsbetrag
+            decimal? TaxPercent;                                                             // MWST Prozentsatz
+            public decimal? TaxTotalAmount;                                                  // MWST Betrag
+            public decimal? GrandTotalAmount;                                                // Gesamtbetrag
+            public string? Currency;                                                         // Währung
+
+            public ZUGFeRD_InfoType(
+                int? docu_archive_invoicesysid,
+                List<ZUGFeRD_invoice_details_TypeTable>? zUGFeRD_invoice_details_TypeTable,
+                string? invoiceNo,
+                DateTime? invoiceDate,
+                decimal? taxBasisAmount,
+                decimal? taxPercent,
+                decimal? taxTotalAmount,
+                decimal? grandTotalAmount,
+                string? currency)
+            {
+                Docu_archive_invoicesysid = docu_archive_invoicesysid;
+                ZUGFeRD_invoice_details_TypeTable = zUGFeRD_invoice_details_TypeTable;
+                InvoiceNo = invoiceNo;
+                InvoiceDate = invoiceDate;
+                TaxBasisAmount = taxBasisAmount;
+                TaxPercent = taxPercent;
+                TaxTotalAmount = taxTotalAmount;
+                GrandTotalAmount = grandTotalAmount;
+                Currency = currency;
+            }
         }
-    }
 
-    public enum enumShowMessageMode
-    {
-        Success, Break, OKCancel, YesNo, YesNoCancel, Done, Info,
-        YesNoPlus
-    }
-
-    public class WordsArray
-    {
-        public List<string> Cells_content_list = new List<string>();
-        public Rectangle Rectangle;
-        public string Text;
-
-        public WordsArray(Rectangle rectangle, string text)
+        public class ZUGFeRD_invoice_details_TypeTable
         {
-            Rectangle = rectangle;
-            Text = text;
+            public decimal? BilledQuantity;
+            public string? SellerAssignedID;
+            public decimal? GrossUnitPrice;
+            public decimal? LineTotalAmount;
+
+            public ZUGFeRD_invoice_details_TypeTable(
+                decimal billedQuantity,
+                string sellerAssignedID,
+                decimal grossUnitPrice,
+                decimal lineTotalAmount)
+            {
+                BilledQuantity = billedQuantity;
+                SellerAssignedID = sellerAssignedID;
+                GrossUnitPrice = grossUnitPrice;
+                LineTotalAmount = lineTotalAmount;
+            }
         }
+
+        public enum enumShowMessageMode
+        {
+            Success, Break, OKCancel, YesNo, YesNoCancel, Done, Info,
+            YesNoPlus
+        }
+
+        public class WordsArray
+        {
+            public List<string> Cells_content_list = new List<string>();
+            public Rectangle Rectangle;
+            public string Text;
+
+            public WordsArray(Rectangle rectangle, string text)
+            {
+                Rectangle = rectangle;
+                Text = text;
+            }
+        }
+
+
     }
-
-
 }

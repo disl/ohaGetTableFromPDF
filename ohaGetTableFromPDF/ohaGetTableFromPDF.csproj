@@ -16,6 +16,8 @@
     <PackageReference Include="Ghostscript.NET" Version="1.2.3.1" />
     <PackageReference Include="iTextSharp" Version="5.5.13.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Tabula" Version="0.1.4" />
+    <PackageReference Include="Tabula.Csv" Version="0.1.4" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 
