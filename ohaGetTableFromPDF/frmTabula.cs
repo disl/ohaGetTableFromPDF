@@ -1,8 +1,6 @@
 ﻿using System.Data;
 using System.Text;
-using System.Windows.Forms;
 using Tabula;
-using Tabula.Detectors;
 using Tabula.Extractors;
 using UglyToad.PdfPig;
 using static ohaGetTableFromPDF.Form1;
@@ -10,7 +8,7 @@ using static ohaGetTableFromPDF.Form1;
 namespace ohaGetTableFromPDF
 {
     public partial class frmTabula : Form
-    {     
+    {
         public frmTabula()
         {
             InitializeComponent();
@@ -18,7 +16,7 @@ namespace ohaGetTableFromPDF
 
         private void frmTabula_Load(object sender, EventArgs e)
         {
-            
+
 
         }
 
@@ -31,6 +29,11 @@ namespace ohaGetTableFromPDF
 
         private void readTablesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            Read(new List<string> { "851", "854" }, 11);
+        }
+
+        private void Read(List<string> InputPrefixArr, int InputLenght)
+        {
             try
             {
                 OpenFileDialog open_file = new OpenFileDialog();
@@ -39,19 +42,21 @@ namespace ohaGetTableFromPDF
                 {
                     tableLayoutPanel1.Controls.Clear();
 
+                    List<string> output_arr_all = new List<string>();
                     using (PdfDocument _document = PdfDocument.Open(open_file.FileName, new ParsingOptions() { ClipPaths = true }))
                     {
-                        int row_no=0;
+                        int row_no = 0;
                         var _pages = _document.GetPages().ToList();
+
                         for (int i = 1; i <= _pages.Count; i++)
                         {
                             var page = ObjectExtractor.Extract(_document, i);
                             // detect canditate table zones
-                            SimpleNurminenDetectionAlgorithm detector = new SimpleNurminenDetectionAlgorithm();
+                            var detector = new Tabula.Detectors.SimpleNurminenDetectionAlgorithm();
                             var regions = detector.Detect(page);
                             for (int r = 0; r<regions.Count; r++)
                             {
-                                IExtractionAlgorithm ea = new BasicExtractionAlgorithm(); //SpreadsheetExtractionAlgorithm(); //BasicExtractionAlgorithm();
+                                IExtractionAlgorithm ea = new BasicExtractionAlgorithm();
                                 var tables = ea.Extract(page.GetArea(regions[r].BoundingBox)); // take first candidate area
                                 for (int t = 0; t<tables.Count; t++)
                                 {
@@ -62,14 +67,16 @@ namespace ohaGetTableFromPDF
                                     StringBuilder sb = new StringBuilder();
                                     var table = tables[t];
                                     var rows = table.Rows;
-                                    var csv_writer = new Tabula.Writers.CSVWriter(";");
-
+                                    var csv_writer = new Tabula.Writers.CSVWriter(";");                                    
                                     using (var stream = new MemoryStream())
                                     using (var sw = new StreamWriter(stream) { AutoFlush = true })
                                     {
                                         csv_writer.Write(sb, table);
                                         var output_str = sb.ToString();
                                         var output_arr = output_str.Split('\n');
+
+                                        output_arr_all.AddRange(output_arr);
+
                                         foreach (var row in output_arr)
                                         {
                                             _dataTable.Rows.Add(row);
@@ -82,8 +89,8 @@ namespace ohaGetTableFromPDF
                                         dgv.ReadOnly = true;
                                         dgv.AllowUserToAddRows = false;
                                         dgv.AllowUserToDeleteRows = false;
-                                        
-                                        tableLayoutPanel1.Controls.Add(dgv,0,row_no);
+
+                                        tableLayoutPanel1.Controls.Add(dgv, 0, row_no);
                                         row_no++;
                                     }
                                 }
@@ -91,7 +98,56 @@ namespace ohaGetTableFromPDF
                         }
                     }
 
-                    
+                    string? header_first_word = null;
+                    string[] header_arr = null;
+                    if (output_arr_all != null && output_arr_all.Count > 0 && InputPrefixArr != null && InputPrefixArr.Count >0)
+                    {
+                        List<string[]> output_arr = new List<string[]>();
+                        string[]? tmp_row = null;
+                        bool is_new_row = false;
+                        bool is_header = false;
+                        string[]? tmp_header_arr = null;
+                        foreach (var row in output_arr_all)
+                        {
+                            var row_arr = row.Split(",");
+                            var row_arr_1 = row_arr[0];
+                            //if (string.IsNullOrEmpty(row_arr_1))
+                            //    continue;
+                            if (string.IsNullOrEmpty(header_first_word))
+                            {
+                                header_first_word = row_arr_1;
+                                header_arr = row_arr;
+                                is_header=true;
+                            }
+                            else
+                            {
+                                if (is_header)
+                                {
+                                    if (tmp_row != null && tmp_header_arr!= null && tmp_row[0] == tmp_header_arr[0])
+                                        continue;
+                                    ConcatWithPreviouse(header_arr, row_arr);
+                                    is_header=false;
+                                }
+                                if (row_arr_1==header_first_word)
+                                    continue;  // Ignore header
+                                else
+                                {
+                                    is_new_row = IsNewRow(row_arr_1, InputPrefixArr, InputLenght);
+                                    if (is_new_row)
+                                    {
+                                        tmp_row = row_arr;
+                                        output_arr.Add(row_arr);
+                                    }
+                                    else
+                                    {
+                                        int last_ind = output_arr.LastIndexOf(tmp_row);
+                                        if(last_ind != -1)
+                                        ConcatWithPreviouse(output_arr[last_ind], row_arr);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     //var output_str = sb.ToString();
 
@@ -123,6 +179,42 @@ namespace ohaGetTableFromPDF
                 ShowMessageBox(enumShowMessageMode.Break, ex.Message);
             }
             finally { Cursor = Cursors.Default; }
+        }
+
+        private void ConcatWithPreviouse(string[] header_arr, string[] row_arr)
+        {
+            for (int i = 0; i < header_arr.Length; i++)
+            {
+                header_arr[i] += " " + row_arr[i];
+            }
+        }
+
+        private bool IsNewRow(string row_arr_1, List<string>? inputPrefixArr, int? inputLenght)
+        {
+            bool isInputLenOK = inputLenght != null && row_arr_1.Length == inputLenght;
+            if (!string.IsNullOrEmpty(row_arr_1)) return true;
+            if (inputPrefixArr == null || inputPrefixArr.Count == 0) return true;
+
+            if (isInputLenOK)
+            {
+                foreach (string inputPrefixItem in inputPrefixArr)
+                {
+                    if (row_arr_1.Contains(inputPrefixItem))
+                        return true;
+                }
+            }
+            else
+            {
+                if (inputLenght == null)
+                {
+                    foreach (string inputPrefixItem in inputPrefixArr)
+                    {
+                        if (row_arr_1.Contains(inputPrefixItem))
+                            return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public DialogResult ShowMessageBox(
@@ -191,6 +283,6 @@ namespace ohaGetTableFromPDF
             return MessageBox.Show(_message, _caption, _buttons, _icon, _default_button);
         }
 
-        
+
     }
 }
