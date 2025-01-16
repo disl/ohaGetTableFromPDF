@@ -1,14 +1,20 @@
 ﻿using System.Data;
+using System.Diagnostics;
 using System.Text;
 using Tabula;
 using Tabula.Extractors;
 using UglyToad.PdfPig;
-using static ohaGetTableFromPDF.Form1;
 
 namespace ohaGetTableFromPDF
 {
     public partial class frmTabula : Form
     {
+        public enum enumShowMessageMode
+        {
+            Success, Break, OKCancel, YesNo, YesNoCancel, Done, Info,
+            YesNoPlus
+        }
+
         public frmTabula()
         {
             InitializeComponent();
@@ -29,10 +35,10 @@ namespace ohaGetTableFromPDF
 
         private void readTablesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Read(new List<string> { "851", "854" }, 11);
+            Read(null, null);  // new List<string> { "851", "854" }, 11);
         }
 
-        private void Read(List<string> InputPrefixArr, int InputLenght)
+        private void Read(List<string>? InputPrefixArr, int? InputLenght)
         {
             try
             {
@@ -51,13 +57,15 @@ namespace ohaGetTableFromPDF
                         for (int i = 1; i <= _pages.Count; i++)
                         {
                             var page = ObjectExtractor.Extract(_document, i);
-                            // detect canditate table zones
+                            var rulings = page.GetRulings().ToList();
                             var detector = new Tabula.Detectors.SimpleNurminenDetectionAlgorithm();
                             var regions = detector.Detect(page);
                             for (int r = 0; r<regions.Count; r++)
                             {
-                                IExtractionAlgorithm ea = new BasicExtractionAlgorithm();
-                                var tables = ea.Extract(page.GetArea(regions[r].BoundingBox)); // take first candidate area
+                                var ea = new BasicExtractionAlgorithm();
+                                var area = page.GetArea(regions[r].BoundingBox);
+                                IReadOnlyList<float> _verticalRulingPositions = null;
+                                var tables = ea.Extract(area); // take first candidate area
                                 for (int t = 0; t<tables.Count; t++)
                                 {
                                     var table_name = "Table_" + i.ToString() + "_" + r.ToString() + "_" + t;
@@ -66,18 +74,22 @@ namespace ohaGetTableFromPDF
 
                                     StringBuilder sb = new StringBuilder();
                                     var table = tables[t];
+
                                     var rows = table.Rows;
-                                    var csv_writer = new Tabula.Writers.CSVWriter(";");                                    
+
+                                    var csv_writer = new Tabula.Writers.CSVWriter();
+                                    //var csv_writer = new Tabula.Writers.JSONWriter();
+
                                     using (var stream = new MemoryStream())
                                     using (var sw = new StreamWriter(stream) { AutoFlush = true })
                                     {
                                         csv_writer.Write(sb, table);
                                         var output_str = sb.ToString();
-                                        var output_arr = output_str.Split('\n');
+                                        var _output_arr = output_str.Split('\n');
 
-                                        output_arr_all.AddRange(output_arr);
+                                        output_arr_all.AddRange(_output_arr);
 
-                                        foreach (var row in output_arr)
+                                        foreach (var row in _output_arr)
                                         {
                                             _dataTable.Rows.Add(row);
                                         }
@@ -100,78 +112,91 @@ namespace ohaGetTableFromPDF
 
                     string? header_first_word = null;
                     string[] header_arr = null;
-                    if (output_arr_all != null && output_arr_all.Count > 0 && InputPrefixArr != null && InputPrefixArr.Count >0)
+                    List<string[]> output_arr = new List<string[]>();
+                    string[] row_arr = null;
+                    string[]? tmp_row = null;
+                    bool is_new_row = false;
+                    bool is_header = false;
+                    string[]? tmp_header_arr = null;
+                    foreach (string row in output_arr_all)
                     {
-                        List<string[]> output_arr = new List<string[]>();
-                        string[]? tmp_row = null;
-                        bool is_new_row = false;
-                        bool is_header = false;
-                        string[]? tmp_header_arr = null;
-                        foreach (var row in output_arr_all)
+                        //var _row = row.Replace(","," ");
+                        row_arr = row.Split(",");
+                        var row_arr_1 = row_arr[0];
+                        //if (string.IsNullOrEmpty(row_arr_1))
+                        //    continue;
+                        if (string.IsNullOrEmpty(header_first_word))
                         {
-                            var row_arr = row.Split(",");
-                            var row_arr_1 = row_arr[0];
-                            //if (string.IsNullOrEmpty(row_arr_1))
-                            //    continue;
-                            if (string.IsNullOrEmpty(header_first_word))
+                            header_first_word = row_arr_1;
+                            header_arr = row_arr;
+                            is_header=true;
+                        }
+                        else
+                        {
+                            if (is_header)
                             {
-                                header_first_word = row_arr_1;
-                                header_arr = row_arr;
-                                is_header=true;
+                                if (tmp_row != null && tmp_header_arr!= null && tmp_row[0] == tmp_header_arr[0])
+                                    continue;
+                                //ConcatWithPreviouse(header_arr, row_arr);
+                                is_header=false;
                             }
+                            if (row_arr_1==header_first_word)
+                                continue;  // Ignore header
                             else
                             {
-                                if (is_header)
+                                is_new_row = IsNewRow(row_arr_1, InputPrefixArr, InputLenght);
+                                if (is_new_row)
                                 {
-                                    if (tmp_row != null && tmp_header_arr!= null && tmp_row[0] == tmp_header_arr[0])
-                                        continue;
-                                    ConcatWithPreviouse(header_arr, row_arr);
-                                    is_header=false;
+                                    tmp_row = row_arr;
+                                    output_arr.Add(row_arr);
                                 }
-                                if (row_arr_1==header_first_word)
-                                    continue;  // Ignore header
                                 else
                                 {
-                                    is_new_row = IsNewRow(row_arr_1, InputPrefixArr, InputLenght);
-                                    if (is_new_row)
-                                    {
-                                        tmp_row = row_arr;
-                                        output_arr.Add(row_arr);
-                                    }
-                                    else
-                                    {
-                                        int last_ind = output_arr.LastIndexOf(tmp_row);
-                                        if(last_ind != -1)
+                                    int last_ind = output_arr.LastIndexOf(tmp_row);
+                                    if (last_ind != -1)
                                         ConcatWithPreviouse(output_arr[last_ind], row_arr);
-                                    }
                                 }
                             }
                         }
                     }
 
-                    //var output_str = sb.ToString();
+                    string output_line = "";
+                    List<string> output_arr_str = new List<string>();
 
-                    //var file_name = Path.Combine(Path.GetTempPath(), "pdf_to_table_output.csv");
+                    // Header
+                    output_line = string.Join(";", header_arr);
+                    output_arr_str.Add(output_line.Trim().Replace("\n", ""));
+
+                    // Rows
+                    foreach (var row in output_arr)
+                    {
+                        output_line = string.Join(";", row);
+                        output_arr_str.Add(output_line.Trim().Replace("\n", ""));
+                    }
+
+                    // var output_str = sb.ToString();
+
+                    var file_name = Path.Combine(Path.GetTempPath(), "pdf_to_table_output.csv");
                     //using (System.IO.StreamWriter file = new System.IO.StreamWriter(file_name))
                     //{
                     //    file.WriteLine(sb.ToString());
                     //}
 
-                    //if (File.Exists(file_name))
-                    //    File.Delete(file_name);
-                    //System.Text.Encoding encoding = Encoding.UTF8;
-                    //File.WriteAllText(file_name, output_str, encoding);
-                    //Process.Start(new ProcessStartInfo
-                    //{
-                    //    Arguments=file_name,
-                    //    FileName = "notepad.exe",
-                    //    UseShellExecute = true
-                    //});
-                    //Process.Start(new ProcessStartInfo
-                    //{
-                    //    FileName=Path.GetDirectoryName(file_name),
-                    //    UseShellExecute = true
-                    //});
+                    if (File.Exists(file_name))
+                        File.Delete(file_name);
+                    System.Text.Encoding encoding = Encoding.UTF8;
+                    File.WriteAllLines(file_name, output_arr_str, encoding);
+                    Process.Start(new ProcessStartInfo
+                    {
+                        Arguments=file_name,
+                        FileName = "notepad.exe",
+                        UseShellExecute = true
+                    });
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName=Path.GetDirectoryName(file_name),
+                        UseShellExecute = true
+                    });
                 }
             }
             catch (Exception ex)
@@ -183,9 +208,13 @@ namespace ohaGetTableFromPDF
 
         private void ConcatWithPreviouse(string[] header_arr, string[] row_arr)
         {
-            for (int i = 0; i < header_arr.Length; i++)
+            int bound = row_arr.Length <header_arr.Length ? row_arr.Length : header_arr.Length;
+
+            for (int i = 0; i < bound; i++)
             {
-                header_arr[i] += " " + row_arr[i];
+                var row_arr_item = row_arr[i];
+
+                header_arr[i] += !string.IsNullOrEmpty(row_arr_item) ? " " + row_arr_item : "";
             }
         }
 

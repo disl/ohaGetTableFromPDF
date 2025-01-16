@@ -1,7 +1,4 @@
-﻿using Emgu.CV;
-using Emgu.CV.UI;
-
-namespace TextOCR_PDF
+﻿namespace TextOCR_PDF
 {
     public partial class ImageViewer_UserControl : Emgu.CV.UI.ImageBox
     {
